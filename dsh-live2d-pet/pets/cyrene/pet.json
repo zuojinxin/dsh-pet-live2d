@@ -1,0 +1,114 @@
+{
+  "petManifestVersion": 1,
+  "id": "cyrene",
+  "displayName": "昔涟",
+  "description": "昔涟（Cyrene）Live2D 桌宠 · 模型作者：B站「是依七哒」· 仅供非商用",
+  "version": "1.0.0",
+  "author": "model: 是依七哒 (https://space.bilibili.com/457683484) / port",
+  "license": "模型允许使用/修改/再分发（非商用，需署名）；角色IP归米哈游/HoYoverse",
+  "homepage": "https://space.bilibili.com/457683484",
+  "renderer": "live2d",
+  "live2d": {
+    "model": "Cyrene.model3.json",
+    "scale": 1,
+    "translate": { "x": 0, "y": 0 },
+    "motions": {
+      "idle": "Idle",
+      "waiting": "Idle",
+      "thinking": "Wink",
+      "tool": "Cute",
+      "done": "Smile",
+      "failed": "Reset"
+    },
+    "expressions": {},
+    "expressionSlots": [
+      {
+        "id": "eyes",
+        "label": "眼部",
+        "none": "默认",
+        "options": [
+          { "label": "星星眼", "expressions": ["星星眼"], "fidgetWeight": 1 },
+          { "label": "圈圈眼", "expressions": ["圈圈眼"], "fidgetWeight": 1 },
+          { "label": "开心眼", "expressions": ["开心眼"], "fidgetWeight": 2 }
+        ]
+      },
+      {
+        "id": "glasses",
+        "label": "墨镜",
+        "none": "无",
+        "options": [
+          { "label": "墨镜", "expressions": ["墨镜"] }
+        ]
+      },
+      {
+        "id": "glow",
+        "label": "闪光",
+        "none": "无",
+        "options": [
+          { "label": "闪耀", "expressions": ["闪耀"], "fidgetWeight": 1 }
+        ]
+      },
+      {
+        "id": "symbol",
+        "label": "符号",
+        "none": "无",
+        "options": [
+          { "label": "问号", "expressions": ["问号"], "fidgetWeight": 1 }
+        ]
+      },
+      {
+        "id": "swing",
+        "label": "秋千姿势",
+        "none": "回正",
+        "options": [
+          { "label": "左倾", "expressions": ["拽秋千1"] },
+          { "label": "右倾", "expressions": ["拽秋千2"] }
+        ]
+      },
+      {
+        "id": "rope",
+        "label": "绳子开关",
+        "none": "无",
+        "options": [
+          { "label": "开", "expressions": ["开"] },
+          { "label": "关", "expressions": ["关"] }
+        ]
+      },
+      {
+        "id": "action",
+        "label": "动作",
+        "none": "无",
+        "options": [
+          { "label": "眨眼", "motion": "Wink" },
+          { "label": "我可爱吧", "motion": "Cute" },
+          { "label": "笑一笑", "motion": "Smile" },
+          { "label": "荡秋千", "motion": "Swing" }
+        ]
+      }
+    ],
+    "fidgetSlots": ["eyes", "symbol", "glow", "glasses"],
+    "hiddenMotions": ["绳子开关#5", "表情3#4", "表情2#3", "表情#2", "秋千#1", "Start"],
+    "lines": {
+      "greet": ["……你来啦。", "我在这儿呢。"],
+      "click": ["嗯？", "怎么了？", "别戳啦~"],
+      "pat": ["唔……好舒服。", "嘿嘿。"],
+      "tail": ["呀！", "别、别摸那里……"],
+      "spin": ["有点晕……", "转圈圈~"],
+      "reset": ["回到原点了。", "这样就好。"],
+      "loadFailed": ["好像哪里出错了……"],
+      "phase": {
+        "thinking": "让我想想……",
+        "tool": "在忙了~",
+        "waiting": "要你确认一下哦",
+        "asking": "在等你回答呢",
+        "helper": "叫了帮手一起~",
+        "queued": "收到啦",
+        "done": "搞定啦！",
+        "failed": "呜……出了点问题。"
+      }
+    },
+    "patReactions": ["星星眼", "问号", "笑一笑"],
+    "tailReactions": ["问号", "眨眼"],
+    "spinReactions": ["圈圈眼", "问号"]
+  }
+}
