@@ -573,33 +573,6 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
   }
 
   /**
-   * 宠物列表 + 当前选中：给「设置 → 桌宠 → 宠物形象」的切换器用。
-   * （右键面板不再负责切换，只显示当前宠物名。）
-   */
-  const petPickerStore = { value: { pets: [], currentId: null }, listeners: new Set() };
-  const setPetPickerState = (next) => {
-    const merged = Object.assign({}, petPickerStore.value, next);
-    if (merged.currentId === petPickerStore.value.currentId && sameJson(merged.pets, petPickerStore.value.pets)) return;
-    petPickerStore.value = merged;
-    for (const listener of petPickerStore.listeners) {
-      try { listener(merged); } catch { /* 一个订阅者坏了不该拖垮别的 */ }
-    }
-  };
-  /** 订阅「宠物列表/当前宠物」；返回当前值。 */
-  function usePetPicker() {
-    const [value, setValue] = useState(petPickerStore.value);
-    useEffect(() => {
-      const listener = (next) => setValue(next);
-      petPickerStore.listeners.add(listener);
-      listener(petPickerStore.value);
-      return () => { petPickerStore.listeners.delete(listener); };
-    }, []);
-    return value;
-  }
-  /** 设置页 → Pet 组件的桥：切换宠物 / 重新拉取宠物列表。 */
-  const petPickerBridge = { switchTo: null, refresh: null };
-
-  /**
    * **谁在轮询**：一个模块级单例，**不跟着任何组件走**。
    *
    * 原来轮询写在 `Pet` 的 effect 里 —— 那有个要命的缺口：**用户在设置里选了"桌面"之后，
@@ -6203,7 +6176,6 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
     const [motionGroup, setMotionGroup] = useState("");
 
     const [catalog, setCatalog] = useState(null);
-    const [catalogRev, setCatalogRev] = useState(0);
     const [error, setError] = useState(null);
     const [coreMissing, setCoreMissing] = useState(false);
     const [ready, setReady] = useState(false);
@@ -6500,23 +6472,6 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
         if (alive) setError(String((reason && reason.message) || reason));
       });
       return () => { alive = false; };
-    }, [catalogRev]);
-
-    // 把宠物列表/当前选中同步给「设置 → 桌宠 → 宠物形象」的切换器。
-    useEffect(() => {
-      const pets = (catalog?.pets ?? []).map((entry) => ({
-        id: entry.id,
-        displayName: petDisplayName(entry),
-        description: petDescription(entry),
-      }));
-      setPetPickerState({ pets, currentId: typeof petId === "string" ? petId : null });
-    }, [catalog, petId]);
-
-    // 设置页切换宠物 = 改这里的 petId；刷新列表 = 重新拉 catalog。
-    useEffect(() => {
-      petPickerBridge.switchTo = (id) => { if (typeof id === "string" && id !== "") setPetId(id); };
-      petPickerBridge.refresh = () => setCatalogRev((n) => n + 1);
-      return () => { petPickerBridge.switchTo = null; petPickerBridge.refresh = null; };
     }, []);
 
     /**
@@ -8717,7 +8672,12 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
           },
         },
           h("header", null,
-            h("span", { "data-title": "", title: petDescription(pet) }, petDisplayName(pet)),
+            catalog.pets.length > 1
+              ? h("select", {
+                  value: pet.id,
+                  onChange: (event) => setPetId(event.target.value),
+                }, catalog.pets.map((entry) => h("option", { key: entry.id, value: entry.id }, petDisplayName(entry))))
+              : h("span", { "data-title": "", title: petDescription(pet) }, petDisplayName(pet)),
             h("button", {
               type: "button",
               "data-close": "",
@@ -9720,35 +9680,6 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
     );
   }
 
-  /**
-   * 「宠物形象」切换器（设置页用）：下拉选宠物 + 刷新列表。
-   * 真正的切换走模块级桥 `petPickerBridge`（设置页与 Pet 组件不是同一棵 React 树）。
-   */
-  function PetPickerControls() {
-    const picker = usePetPicker();
-    const pets = Array.isArray(picker.pets) ? picker.pets : [];
-    const refresh = () => { if (typeof petPickerBridge.refresh === "function") petPickerBridge.refresh(); };
-    const refreshRow = h("div", { "data-add-row": "" },
-      h("button", { type: "button", "data-reset": "", onClick: refresh }, t("刷新列表")),
-      h("span", { "data-note-inline": "" }, t("切换即时生效")));
-    if (pets.length === 0) {
-      return h("div", { "data-pet-picker": "" },
-        h("div", { "data-note-inline": "" }, t("还没有可用的宠物")),
-        refreshRow);
-    }
-    return h("div", { "data-pet-picker": "" },
-      h("div", { "data-line-row": "pet-picker" },
-        h("span", { "data-row-label": "" }, t("宠物")),
-        h("select", {
-          value: picker.currentId ?? "",
-          onChange: (event) => {
-            const id = event.target.value;
-            if (typeof petPickerBridge.switchTo === "function") petPickerBridge.switchTo(id);
-          },
-        }, pets.map((entry) => h("option", { key: entry.id, value: entry.id }, entry.displayName || entry.id)))),
-      refreshRow);
-  }
-
   /** 设置页的「会话提醒」：当前会话免打扰时机 + 提醒范围（存 overrides.notify）。 */
   function ReminderControls() {
     useSettings();
@@ -9786,7 +9717,6 @@ window.__ModuleLoader__.load({ id: "dsh-pet-live2d", factory: (require) => {
     useSettings();
     const card = settingsCard;
     return [
-      card("pet-picker", t("宠物形象"), t("切换要显示哪只桌宠"), h(PetPickerControls, null)),
       ...TUNING_GROUPS.filter((group) => !TUNING_GROUPS_INLINE.includes(group.id)).map((group) => card(
         "tune-" + group.id, group.label, group.hint, h(TuningControls, { group: group.id }))),
       // 显示层放最上面：它是"这只宠物在哪"的问题，比手感/池子更先要回答。
